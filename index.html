@@ -1,0 +1,158 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Twitter NGV</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#09090e;color:#eee;font-family:Arial,sans-serif}
+:root{--purple:#9b70ed;--border:#292632;--muted:#92909e}
+.layout{max-width:1250px;margin:auto;display:grid;grid-template-columns:240px minmax(0,600px) 300px;gap:25px;padding:0 18px}
+.sidebar{height:100vh;position:sticky;top:0;padding:25px 10px;border-right:1px solid var(--border)}
+.logo{font-size:27px;font-weight:900;color:var(--purple);margin:10px 12px 35px}
+.nav{display:block;padding:15px 13px;color:#ddd;text-decoration:none;border-radius:12px;margin:5px 0;font-size:16px}
+.nav:hover,.nav.active{background:#211a30;color:#c5a7ff}
+.nav b{margin-right:12px}
+.publish-btn{width:100%;padding:15px;background:var(--purple);color:white;border:0;border-radius:25px;font-size:15px;font-weight:bold;margin-top:20px}
+main{border-right:1px solid var(--border);border-left:1px solid var(--border);min-height:100vh}
+.top{padding:20px;border-bottom:1px solid var(--border);font-weight:bold;font-size:19px}
+.composer{padding:20px;border-bottom:8px solid #15141c}
+.composer textarea{width:100%;background:transparent;border:0;color:white;font-size:17px;outline:none;resize:vertical;min-height:90px}
+.composer input{background:#17151e;border:1px solid var(--border);padding:12px;border-radius:9px;color:white;width:100%;margin-top:8px}
+.actions{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
+button{cursor:pointer}
+.primary{background:var(--purple);border:0;color:white;padding:10px 19px;border-radius:22px;font-weight:bold}
+.post{padding:19px;border-bottom:1px solid var(--border)}
+.posthead{display:flex;gap:10px;align-items:center}
+.avatar{height:43px;width:43px;border-radius:50%;background:#392853;display:grid;place-items:center;color:#d3baff;font-weight:bold}
+.username{font-weight:bold}
+.handle,.date{font-size:12px;color:var(--muted)}
+.postbody{line-height:1.55;margin:12px 0 18px;white-space:pre-wrap;overflow-wrap:anywhere}
+.post-actions{display:flex;justify-content:space-between;max-width:420px;color:var(--muted);font-size:13px}
+.post-actions button{background:none;border:0;color:inherit}
+.right{padding:20px 5px}
+.search{width:100%;padding:14px;border:1px solid var(--border);border-radius:25px;background:#17151e;color:white}
+.panel{background:#15141c;border:1px solid var(--border);border-radius:15px;padding:17px;margin-top:20px}
+.panel h3{margin-top:0}
+.panel p{font-size:13px;color:var(--muted);line-height:1.5}
+.empty{padding:40px 15px;text-align:center;color:var(--muted)}
+footer{font-size:11px;color:#666;padding:20px}
+@media(max-width:900px){.layout{grid-template-columns:75px minmax(0,600px);gap:0}.sidebar{padding:20px 5px}.logo{font-size:19px;margin:10px 8px 30px}.nav{font-size:0;text-align:center}.nav b{font-size:20px;margin:0}.publish-btn{font-size:0;padding:14px}.publish-btn:after{content:"+";font-size:22px}.right{display:none}}
+@media(max-width:500px){.layout{display:block;padding:0}.sidebar{height:auto;position:sticky;z-index:5;background:#09090e;border-right:0;border-bottom:1px solid var(--border);padding:5px 10px;display:flex;align-items:center;justify-content:space-between}.logo{margin:5px;font-size:20px}.nav{margin:0;padding:10px}.publish-btn{width:auto;margin:0;padding:10px 15px}.publish-btn:after{content:none}.publish-btn{font-size:12px}main{border:0}.top{position:sticky;top:53px;background:#09090e;z-index:3}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+<div class="logo">𝕏 NGV</div>
+<a class="nav active" href="#"> <b>⌂</b> Início</a>
+<a class="nav" href="#explorar"><b>⌕</b> Explorar</a>
+<a class="nav" href="#noticias"><b>♧</b> Notícias</a>
+<a class="nav" href="#perfil"><b>♙</b> Perfil</a>
+<button class="publish-btn" onclick="document.getElementById('message').focus()">Publicar</button>
+</aside>
+
+<main>
+<div class="top">Página inicial</div>
+
+<section class="composer">
+<div style="color:#c9b4ff;font-weight:bold;margin-bottom:15px">O que está acontecendo no NGV?</div>
+<input id="author" placeholder="Nome do personagem">
+<textarea id="message" maxlength="500" placeholder="Compartilhe algo com o mundo..."></textarea>
+<input id="image" placeholder="Link de uma imagem (opcional)">
+<div class="actions">
+<span style="color:#888;font-size:12px">Até 500 caracteres</span>
+<button class="primary" onclick="publish()">Publicar</button>
+</div>
+</section>
+
+<section id="feed">
+<div class="empty">Ainda não existem publicações.<br>Seja o primeiro a postar!</div>
+</section>
+</main>
+
+<aside class="right">
+<input class="search" id="search" placeholder="Pesquisar no NGV..." oninput="searchPosts()">
+<div class="panel">
+<h3>Sobre o NGV</h3>
+<p>A rede social oficial do universo NGV. Compartilhe acontecimentos, notícias e momentos do seu personagem.</p>
+</div>
+<div class="panel">
+<h3>Em destaque</h3>
+<p>As novidades do universo NGV aparecem aqui.</p>
+</div>
+<footer>Sobre · Regras · Privacidade<br>Twitter NGV © 2026</footer>
+</aside>
+</div>
+
+<script>
+let posts=JSON.parse(localStorage.getItem("ngv_posts")||"[]");
+function render(list=posts){
+const feed=document.getElementById("feed");
+feed.innerHTML="";
+if(!list.length){feed.innerHTML='<div class="empty">Nenhuma publicação encontrada.</div>';return}
+list.forEach((p,i)=>{
+const article=document.createElement("article");
+article.className="post";
+const head=document.createElement("div");
+head.className="posthead";
+const avatar=document.createElement("div");
+avatar.className="avatar";
+avatar.textContent=(p.author[0]||"N").toUpperCase();
+const details=document.createElement("div");
+const username=document.createElement("div");
+username.className="username";
+username.textContent=p.author;
+const date=document.createElement("div");
+date.className="date";
+date.textContent=p.date;
+details.append(username,date);
+head.append(avatar,details);
+const body=document.createElement("div");
+body.className="postbody";
+body.textContent=p.message;
+article.append(head,body);
+if(p.image){
+const img=document.createElement("img");
+img.src=p.image;
+img.alt="Imagem da publicação";
+img.style.cssText="width:100%;max-height:400px;object-fit:contain;border-radius:13px;margin-bottom:15px";
+img.onerror=()=>img.remove();
+article.append(img);
+}
+const actions=document.createElement("div");
+actions.className="post-actions";
+const like=document.createElement("button");
+like.textContent="♡ Curtir ("+p.likes+")";
+like.onclick=()=>{p.likes++;save();};
+const comment=document.createElement("span");
+comment.textContent="♧ Publicação";
+actions.append(like,comment);
+article.append(actions);
+feed.append(article);
+});
+}
+function publish(){
+const author=document.getElementById("author").value.trim();
+const message=document.getElementById("message").value.trim();
+const image=document.getElementById("image").value.trim();
+if(!author||!message){alert("Preencha seu nome e sua publicação.");return}
+posts.unshift({author,message,image,likes:0,date:new Date().toLocaleString("pt-BR")});
+save();
+document.getElementById("message").value="";
+document.getElementById("image").value="";
+}
+function save(){
+localStorage.setItem("ngv_posts",JSON.stringify(posts));
+render();
+}
+function searchPosts(){
+const q=document.getElementById("search").value.toLowerCase();
+render(posts.filter(p=>(p.author+" "+p.message).toLowerCase().includes(q)));
+}
+render();
+</script>
+</body>
+</html>
