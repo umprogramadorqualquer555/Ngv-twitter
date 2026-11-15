@@ -3,156 +3,294 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Twitter NGV</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
+:root{--purple:#9b70ed;--bg:#09090e;--panel:#15141c;--border:#292632;--muted:#92909e}
 *{box-sizing:border-box}
-body{margin:0;background:#09090e;color:#eee;font-family:Arial,sans-serif}
-:root{--purple:#9b70ed;--border:#292632;--muted:#92909e}
-.layout{max-width:1250px;margin:auto;display:grid;grid-template-columns:240px minmax(0,600px) 300px;gap:25px;padding:0 18px}
+body{margin:0;background:var(--bg);color:#eee;font-family:Arial,sans-serif}
+button{cursor:pointer}
+.layout{max-width:1200px;margin:auto;display:grid;grid-template-columns:230px minmax(0,620px) 280px;gap:20px;padding:0 15px}
 .sidebar{height:100vh;position:sticky;top:0;padding:25px 10px;border-right:1px solid var(--border)}
-.logo{font-size:27px;font-weight:900;color:var(--purple);margin:10px 12px 35px}
-.nav{display:block;padding:15px 13px;color:#ddd;text-decoration:none;border-radius:12px;margin:5px 0;font-size:16px}
+.logo{font-size:27px;font-weight:900;color:var(--purple);margin:10px 12px 30px}
+.nav{display:block;padding:15px;color:#ddd;text-decoration:none;border-radius:12px;margin:5px 0}
 .nav:hover,.nav.active{background:#211a30;color:#c5a7ff}
 .nav b{margin-right:12px}
-.publish-btn{width:100%;padding:15px;background:var(--purple);color:white;border:0;border-radius:25px;font-size:15px;font-weight:bold;margin-top:20px}
-main{border-right:1px solid var(--border);border-left:1px solid var(--border);min-height:100vh}
+.primary{background:var(--purple);border:0;color:white;padding:11px 20px;border-radius:22px;font-weight:bold}
+.publish-btn{width:100%;margin-top:20px}
+main{border-left:1px solid var(--border);border-right:1px solid var(--border);min-height:100vh}
 .top{padding:20px;border-bottom:1px solid var(--border);font-weight:bold;font-size:19px}
-.composer{padding:20px;border-bottom:8px solid #15141c}
-.composer textarea{width:100%;background:transparent;border:0;color:white;font-size:17px;outline:none;resize:vertical;min-height:90px}
-.composer input{background:#17151e;border:1px solid var(--border);padding:12px;border-radius:9px;color:white;width:100%;margin-top:8px}
-.actions{display:flex;justify-content:space-between;align-items:center;margin-top:12px}
-button{cursor:pointer}
-.primary{background:var(--purple);border:0;color:white;padding:10px 19px;border-radius:22px;font-weight:bold}
+.composer{padding:20px;border-bottom:8px solid var(--panel)}
+input,textarea{background:#17151e;border:1px solid var(--border);padding:12px;border-radius:9px;color:white;width:100%;margin:7px 0;font:inherit}
+textarea{min-height:90px;resize:vertical}
+.actions{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
 .post{padding:19px;border-bottom:1px solid var(--border)}
 .posthead{display:flex;gap:10px;align-items:center}
-.avatar{height:43px;width:43px;border-radius:50%;background:#392853;display:grid;place-items:center;color:#d3baff;font-weight:bold}
+.avatar{height:43px;width:43px;border-radius:50%;background:#392853;display:grid;place-items:center;color:#d3baff;font-weight:bold;overflow:hidden;flex-shrink:0}
+.avatar img{width:100%;height:100%;object-fit:cover}
 .username{font-weight:bold}
-.handle,.date{font-size:12px;color:var(--muted)}
-.postbody{line-height:1.55;margin:12px 0 18px;white-space:pre-wrap;overflow-wrap:anywhere}
-.post-actions{display:flex;justify-content:space-between;max-width:420px;color:var(--muted);font-size:13px}
-.post-actions button{background:none;border:0;color:inherit}
-.right{padding:20px 5px}
-.search{width:100%;padding:14px;border:1px solid var(--border);border-radius:25px;background:#17151e;color:white}
-.panel{background:#15141c;border:1px solid var(--border);border-radius:15px;padding:17px;margin-top:20px}
-.panel h3{margin-top:0}
-.panel p{font-size:13px;color:var(--muted);line-height:1.5}
+.date,.handle{font-size:12px;color:var(--muted);margin-top:4px}
+.postbody{line-height:1.55;margin:13px 0;white-space:pre-wrap;overflow-wrap:anywhere}
+.post-image{width:100%;max-height:420px;object-fit:contain;border-radius:13px;margin-bottom:12px}
+.post-actions{display:flex;gap:25px;color:var(--muted);font-size:13px}
+.post-actions button{background:none;border:0;color:inherit;padding:5px 0}
+.post-actions button.liked{color:#ed70a0}
+.comment-box{margin-top:12px}
+.comment{padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
 .empty{padding:40px 15px;text-align:center;color:var(--muted)}
-footer{font-size:11px;color:#666;padding:20px}
-@media(max-width:900px){.layout{grid-template-columns:75px minmax(0,600px);gap:0}.sidebar{padding:20px 5px}.logo{font-size:19px;margin:10px 8px 30px}.nav{font-size:0;text-align:center}.nav b{font-size:20px;margin:0}.publish-btn{font-size:0;padding:14px}.publish-btn:after{content:"+";font-size:22px}.right{display:none}}
-@media(max-width:500px){.layout{display:block;padding:0}.sidebar{height:auto;position:sticky;z-index:5;background:#09090e;border-right:0;border-bottom:1px solid var(--border);padding:5px 10px;display:flex;align-items:center;justify-content:space-between}.logo{margin:5px;font-size:20px}.nav{margin:0;padding:10px}.publish-btn{width:auto;margin:0;padding:10px 15px}.publish-btn:after{content:none}.publish-btn{font-size:12px}main{border:0}.top{position:sticky;top:53px;background:#09090e;z-index:3}}
+.right{padding:20px 5px}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:15px;padding:17px;margin-top:20px}
+.panel p{font-size:13px;color:var(--muted);line-height:1.5}
+#login{min-height:100vh;display:grid;place-items:center;padding:20px}
+.login-card{max-width:390px;width:100%;background:var(--panel);padding:30px;border:1px solid var(--border);border-radius:18px;text-align:center}
+.login-card h1{color:var(--purple)}
+.login-card p{color:var(--muted);line-height:1.5}
+#app{display:none}
+#status{font-size:13px;color:#e7a4a4;margin-top:10px}
+.profile-card{padding:20px;border-bottom:1px solid var(--border)}
+@media(max-width:850px){.layout{grid-template-columns:70px minmax(0,620px);gap:0}.right{display:none}.logo{font-size:18px}.nav{font-size:0;text-align:center}.nav b{font-size:20px;margin:0}.publish-btn{font-size:0;padding:13px}.publish-btn:after{content:"+";font-size:20px}}
+@media(max-width:500px){.layout{display:block;padding:0}.sidebar{height:auto;position:sticky;z-index:5;background:var(--bg);border:0;border-bottom:1px solid var(--border);padding:5px;display:flex;align-items:center;justify-content:space-around}.logo{margin:5px;font-size:18px}.nav{margin:0;padding:10px}.publish-btn{width:auto;margin:0;font-size:12px;padding:10px}.publish-btn:after{content:none}main{border:0}.top{position:sticky;top:48px;background:var(--bg);z-index:3}}
 </style>
 </head>
 <body>
+
+<section id="login">
+  <div class="login-card">
+    <h1>𝕏 Twitter NGV</h1>
+    <p>A rede social oficial do universo NGV.</p>
+    <button class="primary" onclick="loginDiscord()">Entrar com Discord</button>
+    <div id="status"></div>
+  </div>
+</section>
+
+<div id="app">
 <div class="layout">
 <aside class="sidebar">
-<div class="logo">𝕏 NGV</div>
-<a class="nav active" href="#"> <b>⌂</b> Início</a>
-<a class="nav" href="#explorar"><b>⌕</b> Explorar</a>
-<a class="nav" href="#noticias"><b>♧</b> Notícias</a>
-<a class="nav" href="#perfil"><b>♙</b> Perfil</a>
-<button class="publish-btn" onclick="document.getElementById('message').focus()">Publicar</button>
+  <div class="logo">𝕏 NGV</div>
+  <a class="nav active" href="#" onclick="showPage('inicio');return false"><b>⌂</b> Início</a>
+  <a class="nav" href="#" onclick="showPage('explorar');return false"><b>⌕</b> Explorar</a>
+  <a class="nav" href="#" onclick="showPage('noticias');return false"><b>♧</b> Notícias</a>
+  <a class="nav" href="#" onclick="showPage('perfil');return false"><b>♙</b> Perfil</a>
+  <button class="primary publish-btn" onclick="document.getElementById('message').focus()">Publicar</button>
+  <button onclick="logout()" style="background:none;border:0;color:#aaa;margin:25px 10px">Sair da conta</button>
 </aside>
 
 <main>
-<div class="top">Página inicial</div>
+  <div class="top" id="page-title">Página inicial</div>
 
-<section class="composer">
-<div style="color:#c9b4ff;font-weight:bold;margin-bottom:15px">O que está acontecendo no NGV?</div>
-<input id="author" placeholder="Nome do personagem">
-<textarea id="message" maxlength="500" placeholder="Compartilhe algo com o mundo..."></textarea>
-<input id="image" placeholder="Link de uma imagem (opcional)">
-<div class="actions">
-<span style="color:#888;font-size:12px">Até 500 caracteres</span>
-<button class="primary" onclick="publish()">Publicar</button>
-</div>
-</section>
+  <section class="composer" id="composer">
+    <div style="color:#c9b4ff;font-weight:bold;margin-bottom:10px">O que está acontecendo no NGV?</div>
+    <textarea id="message" maxlength="500" placeholder="Compartilhe algo com o mundo..."></textarea>
+    <input id="image" placeholder="Link de uma imagem (opcional)">
+    <div class="actions">
+      <span style="color:#888;font-size:12px">Até 500 caracteres</span>
+      <button class="primary" onclick="publish()">Publicar</button>
+    </div>
+  </section>
 
-<section id="feed">
-<div class="empty">Ainda não existem publicações.<br>Seja o primeiro a postar!</div>
-</section>
+  <section id="feed"><div class="empty">Carregando publicações...</div></section>
 </main>
 
 <aside class="right">
-<input class="search" id="search" placeholder="Pesquisar no NGV..." oninput="searchPosts()">
-<div class="panel">
-<h3>Sobre o NGV</h3>
-<p>A rede social oficial do universo NGV. Compartilhe acontecimentos, notícias e momentos do seu personagem.</p>
-</div>
-<div class="panel">
-<h3>Em destaque</h3>
-<p>As novidades do universo NGV aparecem aqui.</p>
-</div>
-<footer>Sobre · Regras · Privacidade<br>Twitter NGV © 2026</footer>
+  <input id="search" placeholder="Pesquisar no NGV..." oninput="renderPosts()">
+  <div class="panel">
+    <h3>Sobre o NGV</h3>
+    <p>A rede social do universo NGV. Compartilhe acontecimentos, notícias e momentos do seu personagem.</p>
+  </div>
+  <div class="panel">
+    <h3>Em destaque</h3>
+    <p>As novidades do universo NGV aparecem aqui.</p>
+  </div>
 </aside>
+</div>
 </div>
 
 <script>
-let posts=JSON.parse(localStorage.getItem("ngv_posts")||"[]");
-function render(list=posts){
-const feed=document.getElementById("feed");
-feed.innerHTML="";
-if(!list.length){feed.innerHTML='<div class="empty">Nenhuma publicação encontrada.</div>';return}
-list.forEach((p,i)=>{
-const article=document.createElement("article");
-article.className="post";
-const head=document.createElement("div");
-head.className="posthead";
-const avatar=document.createElement("div");
-avatar.className="avatar";
-avatar.textContent=(p.author[0]||"N").toUpperCase();
-const details=document.createElement("div");
-const username=document.createElement("div");
-username.className="username";
-username.textContent=p.author;
-const date=document.createElement("div");
-date.className="date";
-date.textContent=p.date;
-details.append(username,date);
-head.append(avatar,details);
-const body=document.createElement("div");
-body.className="postbody";
-body.textContent=p.message;
-article.append(head,body);
-if(p.image){
-const img=document.createElement("img");
-img.src=p.image;
-img.alt="Imagem da publicação";
-img.style.cssText="width:100%;max-height:400px;object-fit:contain;border-radius:13px;margin-bottom:15px";
-img.onerror=()=>img.remove();
-article.append(img);
+const SUPABASE_URL = "https://rttdjgvauznfljpguwkt.supabase.co";
+const SUPABASE_KEY = "sb_publishable_VwEP2IPoiDCH_A8dVm7RoQ_wxEnZvId";
+const db = window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let user = null;
+let profile = null;
+let posts = [];
+let currentPage = "inicio";
+
+function status(message){
+  document.getElementById("status").textContent=message;
 }
-const actions=document.createElement("div");
-actions.className="post-actions";
-const like=document.createElement("button");
-like.textContent="♡ Curtir ("+p.likes+")";
-like.onclick=()=>{p.likes++;save();};
-const comment=document.createElement("span");
-comment.textContent="♧ Publicação";
-actions.append(like,comment);
-article.append(actions);
-feed.append(article);
+
+async function loginDiscord(){
+  status("Redirecionando para o Discord...");
+  const {error}=await db.auth.signInWithOAuth({
+    provider:"discord",
+    options:{redirectTo:window.location.href}
+  });
+  if(error)status(error.message);
+}
+
+async function logout(){
+  await db.auth.signOut();
+  location.reload();
+}
+
+async function start(){
+  const {data:{session},error}=await db.auth.getSession();
+  if(error){status(error.message);return}
+  if(!session){
+    document.getElementById("login").style.display="grid";
+    document.getElementById("app").style.display="none";
+    return;
+  }
+  user=session.user;
+  document.getElementById("login").style.display="none";
+  document.getElementById("app").style.display="block";
+  await loadProfile();
+  await loadPosts();
+}
+
+async function loadProfile(){
+  const {data}=await db.from("profiles").select("*").eq("id",user.id).maybeSingle();
+  profile=data;
+}
+
+async function loadPosts(){
+  const {data,error}=await db.from("posts").select("*").order("created_at",{ascending:false});
+  if(error){document.getElementById("feed").textContent="Erro ao carregar: "+error.message;return}
+  const ids=[...new Set((data||[]).map(p=>p.user_id))];
+  let profiles=[];
+  let likes=[];
+  let comments=[];
+  if(ids.length){
+    const a=await db.from("profiles").select("*").in("id",ids);
+    profiles=a.data||[];
+  }
+  const postIds=(data||[]).map(p=>p.id);
+  if(postIds.length){
+    const b=await db.from("likes").select("*").in("post_id",postIds);
+    likes=b.data||[];
+    const c=await db.from("comments").select("post_id").in("post_id",postIds);
+    comments=c.data||[];
+  }
+  posts=(data||[]).map(p=>({
+    ...p,
+    author:profiles.find(x=>x.id===p.user_id),
+    likes:likes.filter(x=>x.post_id===p.id),
+    commentCount:comments.filter(x=>x.post_id===p.id).length
+  }));
+  renderPosts();
+}
+
+function escapeHTML(value){
+  return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function renderPosts(){
+  const feed=document.getElementById("feed");
+  const query=(document.getElementById("search")?.value||"").toLowerCase();
+  let list=posts.filter(p=>{
+    const name=p.author?.display_name||p.author?.username||"Usuário NGV";
+    return (name+" "+p.content).toLowerCase().includes(query);
+  });
+  if(currentPage==="perfil")list=list.filter(p=>p.user_id===user.id);
+  if(!list.length){
+    feed.innerHTML='<div class="empty">Nenhuma publicação encontrada.</div>';
+    return;
+  }
+  feed.innerHTML=list.map(p=>{
+    const name=p.author?.display_name||p.author?.username||"Usuário NGV";
+    const avatar=p.author?.avatar_url;
+    const liked=p.likes.some(l=>l.user_id===user.id);
+    const date=new Date(p.created_at).toLocaleString("pt-BR");
+    return `<article class="post">
+      <div class="posthead">
+        <div class="avatar">${avatar?`<img src="${escapeHTML(avatar)}">`:escapeHTML(name[0]||"N")}</div>
+        <div><div class="username">${escapeHTML(name)}</div><div class="date">${date}</div></div>
+      </div>
+      <div class="postbody">${escapeHTML(p.content)}</div>
+      ${p.image_url?`<img class="post-image" src="${escapeHTML(p.image_url)}" onerror="this.remove()">`:""}
+      <div class="post-actions">
+        <button class="${liked?"liked":""}" onclick="toggleLike(${p.id})">${liked?"♥":"♡"} Curtir (${p.likes.length})</button>
+        <button onclick="showComments(${p.id})">♧ Comentários (${p.commentCount})</button>
+        ${p.user_id===user.id?`<button onclick="deletePost(${p.id})">Excluir</button>`:""}
+      </div>
+      <div id="comments-${p.id}"></div>
+    </article>`;
+  }).join("");
+}
+
+async function publish(){
+  const content=document.getElementById("message").value.trim();
+  const image=document.getElementById("image").value.trim();
+  if(!content){alert("Escreva alguma coisa antes de publicar.");return}
+  const {error}=await db.from("posts").insert({
+    user_id:user.id,
+    content,
+    image_url:image||null
+  });
+  if(error){alert("Erro ao publicar: "+error.message);return}
+  document.getElementById("message").value="";
+  document.getElementById("image").value="";
+  await loadPosts();
+}
+
+async function toggleLike(id){
+  const existing=posts.find(p=>p.id===id)?.likes.find(l=>l.user_id===user.id);
+  let result;
+  if(existing){
+    result=await db.from("likes").delete().eq("post_id",id).eq("user_id",user.id);
+  }else{
+    result=await db.from("likes").insert({post_id:id,user_id:user.id});
+  }
+  if(result.error){alert(result.error.message);return}
+  await loadPosts();
+}
+
+async function deletePost(id){
+  if(!confirm("Excluir esta publicação?"))return;
+  const {error}=await db.from("posts").delete().eq("id",id);
+  if(error){alert(error.message);return}
+  await loadPosts();
+}
+
+async function showComments(id){
+  const area=document.getElementById("comments-"+id);
+  if(area.dataset.open==="yes"){area.innerHTML="";area.dataset.open="";return}
+  area.dataset.open="yes";
+  const {data,error}=await db.from("comments").select("*").eq("post_id",id).order("created_at");
+  if(error){area.textContent=error.message;return}
+  let html=(data||[]).map(c=>`<div class="comment">${escapeHTML(c.content)}</div>`).join("");
+  area.innerHTML=`<div class="comment-box">${html}
+    <input id="comment-input-${id}" placeholder="Escreva um comentário...">
+    <button class="primary" onclick="addComment(${id})">Comentar</button>
+  </div>`;
+}
+
+async function addComment(id){
+  const input=document.getElementById("comment-input-"+id);
+  const content=input.value.trim();
+  if(!content)return;
+  const {error}=await db.from("comments").insert({post_id:id,user_id:user.id,content});
+  if(error){alert(error.message);return}
+  await loadPosts();
+  await showComments(id);
+}
+
+function showPage(page){
+  currentPage=page;
+  const titles={inicio:"Página inicial",explorar:"Explorar",noticias:"Notícias",perfil:"Meu perfil"};
+  document.getElementById("page-title").textContent=titles[page];
+  document.getElementById("composer").style.display=page==="inicio"?"block":"none";
+  document.getElementById("search").value="";
+  renderPosts();
+}
+
+db.auth.onAuthStateChange((_event,session)=>{
+  if(session && !user)start();
+  if(!session && user)location.reload();
 });
-}
-function publish(){
-const author=document.getElementById("author").value.trim();
-const message=document.getElementById("message").value.trim();
-const image=document.getElementById("image").value.trim();
-if(!author||!message){alert("Preencha seu nome e sua publicação.");return}
-posts.unshift({author,message,image,likes:0,date:new Date().toLocaleString("pt-BR")});
-save();
-document.getElementById("message").value="";
-document.getElementById("image").value="";
-}
-function save(){
-localStorage.setItem("ngv_posts",JSON.stringify(posts));
-render();
-}
-function searchPosts(){
-const q=document.getElementById("search").value.toLowerCase();
-render(posts.filter(p=>(p.author+" "+p.message).toLowerCase().includes(q)));
-}
-render();
+
+start();
 </script>
 </body>
 </html>
